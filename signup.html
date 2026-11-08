@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>dunkles | Create account</title>
 <link rel="icon" href="dunkles-logo-white.png">
-<script>
-  try { if (localStorage.getItem('dunkles_user')) location.replace('index.html'); } catch (e) {}
-</script>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="auth.js"></script>
 <style>
   .accent-lines{position:absolute;inset:0;pointer-events:none;opacity:.7}
   .hline,.vline{position:absolute;background:#27272a;will-change:transform,opacity}
@@ -87,6 +86,7 @@
         </label>
 
         <p id="err" class="text-xs text-red-400 hidden"></p>
+        <p id="ok" class="text-xs text-emerald-400 hidden"></p>
 
         <button type="submit" class="w-full h-10 rounded-lg bg-zinc-50 text-zinc-900 text-sm font-medium hover:bg-zinc-200 transition-colors">Create account</button>
 
@@ -96,10 +96,10 @@
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-          <button type="button" class="h-10 rounded-lg border border-zinc-800 bg-zinc-950 text-sm hover:bg-zinc-900/80 flex items-center justify-center gap-2">
+          <button type="button" data-provider="github" class="h-10 rounded-lg border border-zinc-800 bg-zinc-950 text-sm hover:bg-zinc-900/80 flex items-center justify-center gap-2">
             <svg class="ico" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>GitHub
           </button>
-          <button type="button" class="h-10 rounded-lg border border-zinc-800 bg-zinc-950 text-sm hover:bg-zinc-900/80 flex items-center justify-center gap-2">
+          <button type="button" data-provider="google" class="h-10 rounded-lg border border-zinc-800 bg-zinc-950 text-sm hover:bg-zinc-900/80 flex items-center justify-center gap-2">
             <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M21.17 8H12M3.95 6.06 8.54 14M10.88 21.94 15.46 14"/></svg>Google
           </button>
         </div>
@@ -113,17 +113,43 @@
 </section>
 
 <script>
-// Sign up: no real account creation yet, goes to the home page
-document.getElementById('form').addEventListener('submit', e => {
+const A = window.dunklesAuth;
+const err = document.getElementById('err');
+const ok = document.getElementById('ok');
+const showErr = t => { ok.classList.add('hidden'); err.textContent = t; err.classList.remove('hidden'); };
+const NOT_READY = 'Sign-up is not configured yet. Add your Supabase keys in auth.js.';
+
+if (A.configured) A.session().then(s => { if (s) location.replace('index.html'); });
+
+document.getElementById('form').addEventListener('submit', async e => {
   e.preventDefault();
-  const err = document.getElementById('err');
+  err.classList.add('hidden'); ok.classList.add('hidden');
+  if (!A.configured) return showErr(NOT_READY);
   if (document.getElementById('password').value !== document.getElementById('confirm').value) {
-    err.textContent = 'Passwords do not match.';
-    err.classList.remove('hidden');
-    return;
+    return showErr('Passwords do not match.');
   }
-  try { localStorage.setItem('dunkles_user', document.getElementById('email').value); } catch (x) {}
-  location.href = 'index.html';
+  const { data, error } = await A.client.auth.signUp({
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value,
+    options: {
+      data: { full_name: document.getElementById('name').value },
+      emailRedirectTo: A.home(),
+    },
+  });
+  if (error) return showErr(error.message);
+  if (data.session) { location.href = 'index.html'; return; }
+  // Email confirmation is on: the user must click the link we just emailed.
+  ok.textContent = 'Check your email and click the confirmation link to finish.';
+  ok.classList.remove('hidden');
+});
+
+document.querySelectorAll('[data-provider]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    err.classList.add('hidden');
+    if (!A.configured) return showErr(NOT_READY);
+    const { error } = await A.oauth(btn.dataset.provider);
+    if (error) showErr(error.message);
+  });
 });
 
 // Particle animation
