@@ -1,7 +1,7 @@
 // dunkles auth (Supabase). Fill in the two values below.
 // The anon key is designed to be public. NEVER put the service_role key here.
 (function () {
-  const SUPABASE_URL = 'https://rhzcfasxbtrgivxzhpay.supabase.co/rest/v1/';
+  const SUPABASE_URL = 'https://rhzcfasxbtrgivxzhpay.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_UDLCgJT9t-0XTXRLlcailw_HprZbLh_';
 
   const ok = !SUPABASE_URL.startsWith('PASTE') && !!window.supabase;
