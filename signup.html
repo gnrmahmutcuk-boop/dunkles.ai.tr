@@ -87,6 +87,13 @@
 
         <p id="err" class="text-xs text-red-400 hidden"></p>
         <p id="ok" class="text-xs text-emerald-400 hidden"></p>
+        <div id="codebox" class="hidden grid gap-2">
+          <label for="code" class="text-sm font-medium text-zinc-300">Verification code</label>
+          <div class="flex gap-2">
+            <input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Enter the code" class="h-9 flex-1 min-w-0 rounded-lg border border-zinc-800 bg-zinc-950 px-3 text-sm tracking-widest text-zinc-50 placeholder:text-zinc-600 placeholder:tracking-normal outline-none focus:ring-[3px] focus:ring-zinc-50/20 focus:border-zinc-600">
+            <button id="verify" type="button" class="h-9 px-4 rounded-lg bg-zinc-50 text-zinc-900 text-sm font-medium hover:bg-zinc-200">Verify</button>
+          </div>
+        </div>
 
         <button type="submit" class="w-full h-10 rounded-lg bg-zinc-50 text-zinc-900 text-sm font-medium hover:bg-zinc-200 transition-colors">Create account</button>
 
@@ -138,9 +145,22 @@ document.getElementById('form').addEventListener('submit', async e => {
   });
   if (error) return showErr(error.message);
   if (data.session) { location.href = 'index.html'; return; }
-  // Email confirmation is on: the user must click the link we just emailed.
-  ok.textContent = 'Check your email and click the confirmation link to finish.';
+  // Email confirmation is on: ask for the code we just emailed.
+  pendingEmail = document.getElementById('email').value;
+  ok.textContent = 'We sent a verification code to ' + pendingEmail + '. Enter it below.';
   ok.classList.remove('hidden');
+  document.getElementById('codebox').classList.remove('hidden');
+  document.getElementById('code').focus();
+});
+
+let pendingEmail = '';
+document.getElementById('verify').addEventListener('click', async () => {
+  err.classList.add('hidden');
+  const token = document.getElementById('code').value.trim();
+  if (!token) return showErr('Enter the code from your email.');
+  const { error } = await A.client.auth.verifyOtp({ email: pendingEmail, token, type: 'signup' });
+  if (error) return showErr(error.message);
+  location.href = 'index.html';
 });
 
 document.querySelectorAll('[data-provider]').forEach(btn => {
