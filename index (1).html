@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dunkles</title>
+<link rel="icon" href="dunkles-logo-white.png">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+</head>
+<body class="bg-black min-h-screen flex items-center justify-center">
+<div class="flex flex-col items-center w-full max-w-4xl mx-auto p-4 space-y-8">
+  <div class="flex flex-col items-center gap-4">
+    <img src="dunkles-logo-white.png" alt="dunkles" class="w-16 h-16 object-contain">
+    <h1 class="text-4xl font-bold text-white">dunkles</h1>
+  </div>
+
+  <div class="w-full">
+    <div class="relative bg-neutral-900 rounded-xl border border-neutral-800">
+      <textarea id="box" placeholder="dunkles'a bir şey sor..."
+        class="w-full px-4 py-3 resize-none bg-transparent border-none text-white text-sm outline-none placeholder:text-neutral-500 placeholder:text-sm"
+        style="min-height:60px;height:60px;overflow:hidden"></textarea>
+      <div class="flex items-center justify-between p-3">
+        <button type="button" class="group p-2 hover:bg-neutral-800 rounded-lg transition-colors flex items-center gap-1">
+          <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          <span class="text-xs text-zinc-400 hidden group-hover:inline">Ekle</span>
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" class="px-2 py-1 rounded-lg text-sm text-zinc-400 transition-colors border border-dashed border-zinc-700 hover:border-zinc-600 hover:bg-zinc-800 flex items-center gap-1">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>Proje
+          </button>
+          <button id="send" type="button" class="px-1.5 py-1.5 rounded-lg text-sm transition-colors border border-zinc-700 hover:border-zinc-600 text-zinc-400 flex items-center">
+            <svg id="arrow" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7M12 19V5"/></svg>
+            <span class="sr-only">Gönder</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-center gap-3 mt-4">
+      <button class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Ekran Görüntüsü Klonla</span></button>
+      <button class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Figma'dan Aktar</span></button>
+      <button class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Proje Yükle</span></button>
+      <button class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Açılış Sayfası</span></button>
+      <button class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Kayıt Formu</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const box = document.getElementById('box');
+const send = document.getElementById('send');
+function resize(reset) {
+  box.style.height = '60px';
+  if (!reset) box.style.height = Math.max(60, Math.min(box.scrollHeight, 200)) + 'px';
+}
+function paint() {
+  const on = box.value.trim().length > 0;
+  send.className = 'px-1.5 py-1.5 rounded-lg text-sm transition-colors border border-zinc-700 hover:border-zinc-600 flex items-center ' + (on ? 'bg-white text-black' : 'text-zinc-400');
+}
+function submit() {
+  if (!box.value.trim()) return;
+  // TODO: mesajı AI API'sine gönder
+  box.value = ''; resize(true); paint();
+}
+box.addEventListener('input', () => { resize(); paint(); });
+box.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+});
+send.addEventListener('click', submit);
+</script>
+</body>
+</html>
