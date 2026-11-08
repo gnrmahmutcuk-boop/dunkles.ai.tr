@@ -110,6 +110,7 @@ function bubble(text, mine) {
   p.textContent = text;
   d.appendChild(p); log.appendChild(d);
   d.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  return d;
 }
 function renderChips() {
   chips.innerHTML = '';
@@ -133,7 +134,7 @@ function submit() {
   const cid = ensureChat(text);
   addMsg(cid, shown, true);
   // TODO: send the message to the AI API
-  setTimeout(() => addMsg(cid, "dunkles AI isn't connected yet. Your message works, the AI reply is coming soon.", false), 400);
+  askAI(cid);
   box.value = ''; files = []; renderChips(); resize(true); paint();
 }
 
@@ -256,6 +257,32 @@ document.getElementById('newchat').addEventListener('click', newChat);
 const menu = document.getElementById('menu');
 document.getElementById('profile').addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('hidden'); });
 document.addEventListener('click', e => { if (!menu.contains(e.target)) menu.classList.add('hidden'); });
+
+// ===== AI reply (Supabase Edge Function -> Gemini) =====
+async function askAI(cid) {
+  const c = chats.find(x => x.id === cid);
+  if (!c) return;
+  const history = c.messages.slice(-20).map(m => ({ role: m.mine ? 'user' : 'model', text: m.text }));
+  const tmp = current === cid ? bubble('…', false) : null;
+  let reply = '', failed = false;
+  try {
+    if (!A.client) throw new Error('Sign-in is not configured.');
+    const { data, error } = await A.client.functions.invoke('chat', { body: { messages: history } });
+    if (error) {
+      let msg = error.message;
+      try { const j = await error.context.json(); if (j && j.error) msg = j.error; } catch (e) {}
+      throw new Error(msg);
+    }
+    if (data && data.error) throw new Error(data.error);
+    reply = data.reply;
+  } catch (e) {
+    failed = true;
+    reply = 'Sorry, something went wrong: ' + (e.message || e);
+  }
+  if (tmp) tmp.remove();
+  if (failed) { if (current === cid) bubble(reply, false); }
+  else addMsg(cid, reply, false);
+}
 </script>
 </body>
 </html>
