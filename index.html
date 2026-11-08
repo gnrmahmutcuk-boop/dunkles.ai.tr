@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>dunkles</title>
 <link rel="icon" href="dunkles-logo-white.png">
-<script>
-  try { if (!localStorage.getItem('dunkles_user')) location.replace('login.html'); } catch (e) {}
-</script>
+<style>html{visibility:hidden}</style>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="auth.js"></script>
 </head>
 <body class="bg-black min-h-screen flex items-center justify-center">
 <button id="logout" type="button" class="absolute top-4 right-4 px-3 py-1.5 rounded-lg text-xs text-zinc-400 border border-zinc-800 bg-neutral-900 hover:bg-neutral-800 hover:text-white transition-colors">Log out</button>
@@ -71,8 +71,17 @@ box.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
 });
 send.addEventListener('click', submit);
-document.getElementById('logout').addEventListener('click', () => {
-  try { localStorage.removeItem('dunkles_user'); } catch (e) {}
+const A = window.dunklesAuth;
+
+// Only signed-in users may see this page.
+(async () => {
+  const session = await A.session();
+  if (!session) { location.replace('login.html'); return; }
+  document.documentElement.style.visibility = 'visible';
+})();
+
+document.getElementById('logout').addEventListener('click', async () => {
+  if (A.client) await A.client.auth.signOut();
   location.href = 'login.html';
 });
 </script>
