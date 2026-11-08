@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>dunkles | Giriş</title>
+<title>dunkles | Sign in</title>
 <link rel="icon" href="dunkles-logo-white.png">
+<script>
+  try { if (localStorage.getItem('dunkles_user')) location.replace('index.html'); } catch (e) {}
+</script>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <style>
   .accent-lines{position:absolute;inset:0;pointer-events:none;opacity:.7}
@@ -36,13 +39,9 @@
   <canvas id="fx" class="absolute inset-0 w-full h-full opacity-50 pointer-events-none" style="mix-blend-mode:screen"></canvas>
 
   <header class="absolute left-0 right-0 top-0 flex items-center justify-between px-6 py-4 border-b border-zinc-800/80 z-10">
-    <a href="index.html" class="flex items-center gap-2">
+    <a href="login.html" class="flex items-center gap-2">
       <img src="dunkles-logo-white.png" alt="" class="w-5 h-5 object-contain">
       <span class="text-xs tracking-[0.14em] uppercase text-zinc-400">dunkles</span>
-    </a>
-    <a href="index.html" class="h-9 px-3 inline-flex items-center rounded-lg border border-zinc-800 bg-zinc-900 text-sm hover:bg-zinc-900/80">
-      <span class="mr-2">Ana sayfa</span>
-      <svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </a>
   </header>
 
@@ -50,25 +49,25 @@
     <div class="card-animate w-full max-w-sm rounded-lg border border-zinc-800 bg-zinc-900/70 backdrop-blur shadow-sm">
       <div class="flex flex-col space-y-1.5 p-6">
         <img src="dunkles-logo-white.png" alt="dunkles" class="w-10 h-10 object-contain mb-2">
-        <h2 class="text-2xl font-semibold leading-none tracking-tight">Tekrar hoş geldin</h2>
-        <p class="text-sm text-zinc-400">dunkles hesabına giriş yap ve kaldığın yerden devam et.</p>
+        <h2 class="text-2xl font-semibold leading-none tracking-tight">Welcome back</h2>
+        <p class="text-sm text-zinc-400">Sign in to your dunkles account and pick up where you left off.</p>
       </div>
 
       <form id="form" class="grid gap-5 p-6 pt-0">
         <div class="grid gap-2">
-          <label for="email" class="text-sm font-medium text-zinc-300">E-posta</label>
+          <label for="email" class="text-sm font-medium text-zinc-300">Email</label>
           <div class="relative">
             <svg class="ico absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
-            <input id="email" type="email" required placeholder="sen@mail.com" class="h-9 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-50 placeholder:text-zinc-600 outline-none focus:ring-[3px] focus:ring-zinc-50/20 focus:border-zinc-600">
+            <input id="email" type="email" required placeholder="you@email.com" class="h-9 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-50 placeholder:text-zinc-600 outline-none focus:ring-[3px] focus:ring-zinc-50/20 focus:border-zinc-600">
           </div>
         </div>
 
         <div class="grid gap-2">
-          <label for="password" class="text-sm font-medium text-zinc-300">Şifre</label>
+          <label for="password" class="text-sm font-medium text-zinc-300">Password</label>
           <div class="relative">
             <svg class="ico absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             <input id="password" type="password" required placeholder="••••••••" class="h-9 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-10 text-sm text-zinc-50 placeholder:text-zinc-600 outline-none focus:ring-[3px] focus:ring-zinc-50/20 focus:border-zinc-600">
-            <button id="toggle" type="button" aria-label="Şifreyi göster" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-zinc-400 hover:text-zinc-200">
+            <button id="toggle" type="button" aria-label="Show password" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-zinc-400 hover:text-zinc-200">
               <svg id="eye" class="ico" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </div>
@@ -76,17 +75,17 @@
 
         <div class="flex items-center justify-between">
           <label class="flex items-center gap-2 text-sm text-zinc-400">
-            <input type="checkbox" class="h-4 w-4 rounded-sm border-zinc-700 bg-zinc-950 accent-zinc-50"> Beni hatırla
+            <input type="checkbox" class="h-4 w-4 rounded-sm border-zinc-700 bg-zinc-950 accent-zinc-50"> Remember me
           </label>
-          <a href="#" class="text-sm text-zinc-300 hover:text-zinc-100">Şifremi unuttum</a>
+          <a href="#" class="text-sm text-zinc-300 hover:text-zinc-100">Forgot password?</a>
         </div>
 
-        <button type="submit" class="w-full h-10 rounded-lg bg-zinc-50 text-zinc-900 text-sm font-medium hover:bg-zinc-200 transition-colors">Giriş yap</button>
-        <p id="msg" class="text-xs text-center text-zinc-500 hidden"></p>
+        <button type="submit" class="w-full h-10 rounded-lg bg-zinc-50 text-zinc-900 text-sm font-medium hover:bg-zinc-200 transition-colors">Sign in</button>
+        
 
         <div class="relative">
           <div class="h-px w-full bg-zinc-800"></div>
-          <span class="absolute left-1/2 -translate-x-1/2 -top-2 bg-zinc-900 px-2 text-[11px] uppercase tracking-widest text-zinc-500">veya</span>
+          <span class="absolute left-1/2 -translate-x-1/2 -top-2 bg-zinc-900 px-2 text-[11px] uppercase tracking-widest text-zinc-500">or</span>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -100,28 +99,27 @@
       </form>
 
       <div class="flex flex-col items-center gap-3 p-6 pt-0 text-sm text-zinc-400">
-        <div>dunkles'e yeni misin? <a class="ml-1 text-zinc-200 hover:underline" href="#">Hesap oluştur</a></div>
+        <div>New to dunkles? <a class="ml-1 text-zinc-200 hover:underline" href="signup.html">Create an account</a></div>
       </div>
     </div>
   </div>
 </section>
 
 <script>
-// Şifre göster/gizle
+// Show / hide password
 const pw = document.getElementById('password');
 document.getElementById('toggle').addEventListener('click', () => {
   pw.type = pw.type === 'password' ? 'text' : 'password';
 });
 
-// Form (şimdilik sadece arayüz, gerçek giriş yok)
+// Sign in: no real verification yet, goes to the home page
 document.getElementById('form').addEventListener('submit', e => {
   e.preventDefault();
-  const m = document.getElementById('msg');
-  m.textContent = 'Giriş sistemi henüz bağlı değil.';
-  m.classList.remove('hidden');
+  try { localStorage.setItem('dunkles_user', document.getElementById('email').value); } catch (err) {}
+  location.href = 'index.html';
 });
 
-// Parçacık animasyonu
+// Particle animation
 const c = document.getElementById('fx'), ctx = c.getContext('2d');
 let ps = [];
 const make = () => ({x:Math.random()*c.width, y:Math.random()*c.height, v:Math.random()*.25+.05, o:Math.random()*.35+.15});
