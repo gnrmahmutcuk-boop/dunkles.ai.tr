@@ -76,7 +76,7 @@
           <label class="flex items-center gap-2 text-sm text-zinc-400">
             <input type="checkbox" class="h-4 w-4 rounded-sm border-zinc-700 bg-zinc-950 accent-zinc-50"> Remember me
           </label>
-          <a href="#" class="text-sm text-zinc-300 hover:text-zinc-100">Forgot password?</a>
+          <a id="forgot" href="#" class="text-sm text-zinc-300 hover:text-zinc-100">Forgot password?</a>
         </div>
 
         <button type="submit" class="w-full h-10 rounded-lg bg-zinc-50 text-zinc-900 text-sm font-medium hover:bg-zinc-200 transition-colors">Sign in</button>
@@ -129,6 +129,18 @@ document.getElementById('form').addEventListener('submit', async e => {
   });
   if (error) return showErr(error.message);
   location.href = 'index.html';
+});
+
+document.getElementById('forgot').addEventListener('click', async e => {
+  e.preventDefault();
+  err.className = 'text-xs text-center text-red-400';
+  if (!A.configured) return showErr(NOT_READY);
+  const email = document.getElementById('email').value.trim();
+  if (!email) return showErr('Type your email above first, then click "Forgot password?".');
+  const { error } = await A.client.auth.resetPasswordForEmail(email, { redirectTo: A.home() });
+  if (error) return showErr(error.message);
+  err.textContent = 'Reset link sent. Check your email.';
+  err.className = 'text-xs text-center text-emerald-400';
 });
 
 document.querySelectorAll('[data-provider]').forEach(btn => {
