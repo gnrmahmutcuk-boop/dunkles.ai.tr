@@ -2,7 +2,7 @@
 // The anon key is designed to be public. NEVER put the service_role key here.
 (function () {
   const SUPABASE_URL = 'PASTE_YOUR_SUPABASE_URL';
-  const SUPABASE_ANON_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY';
+  const SUPABASE_ANON_KEY = 'sb_publishable_UDLCgJT9t-0XTXRLlcailw_HprZbLh_';
 
   const ok = !SUPABASE_URL.startsWith('PASTE') && !!window.supabase;
   const client = ok ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
