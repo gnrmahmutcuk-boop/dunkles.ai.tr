@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dunkles</title>
+<link rel="icon" href="dunkles-logo-white.png">
+<style>html{visibility:hidden}</style>
+<script>
+// Safety net: never leave the page black, and show any error on screen.
+(function () {
+  function show(msg) {
+    document.documentElement.style.visibility = 'visible';
+    var d = document.createElement('pre');
+    d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#400;color:#fff;font:12px monospace;padding:8px;margin:0;white-space:pre-wrap';
+    d.textContent = msg;
+    (document.body || document.documentElement).appendChild(d);
+  }
+  window.addEventListener('error', function (e) { show('Error: ' + e.message + ' (' + String(e.filename || '').split('/').pop() + ':' + e.lineno + ')'); });
+  window.addEventListener('unhandledrejection', function (e) { show('Error: ' + ((e.reason && e.reason.message) || e.reason)); });
+  setTimeout(function () { document.documentElement.style.visibility = 'visible'; }, 4000);
+})();
+</script>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="auth.js"></script>
+</head>
+<body class="bg-black h-screen overflow-hidden flex">
+<div id="scrim" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+<aside id="side" class="fixed md:static inset-y-0 left-0 z-40 w-72 shrink-0 -translate-x-full md:translate-x-0 transition-transform duration-200 bg-neutral-950 border-r border-neutral-800 flex flex-col">
+  <div class="flex items-center gap-2 px-4 h-14 border-b border-neutral-800">
+    <img src="dunkles-logo-white.png" alt="" class="w-6 h-6 object-contain">
+    <span class="font-semibold text-white">dunkles</span>
+  </div>
+  <div class="p-3">
+    <button id="newchat" type="button" class="w-full flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 px-3 py-2 text-sm text-white transition-colors">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>New chat
+    </button>
+  </div>
+  <div class="px-4 pb-1 text-[11px] uppercase tracking-widest text-neutral-500">Previous chats</div>
+  <nav id="chatlist" class="flex-1 overflow-y-auto px-2 pb-2 space-y-1"></nav>
+  <div class="relative border-t border-neutral-800 p-3">
+    <div id="menu" class="hidden absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-neutral-800 bg-neutral-900 p-1 shadow-lg">
+      <div id="menumail" class="px-3 py-2 text-xs text-neutral-500 truncate"></div>
+      <button id="openprofile" type="button" class="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white text-left">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile
+      </button>
+      <button id="logout" type="button" class="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white text-left">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Log out
+      </button>
+    </div>
+    <button id="profile" type="button" class="w-full flex items-center gap-3 rounded-lg p-2 hover:bg-neutral-900 transition-colors">
+      <span id="avatar" class="w-8 h-8 shrink-0 rounded-full bg-white text-black grid place-items-center text-sm font-semibold">?</span>
+      <span class="min-w-0 text-left">
+        <span id="pname" class="block text-sm text-white truncate">Account</span>
+        <span id="pmail" class="block text-xs text-neutral-500 truncate"></span>
+      </span>
+    </button>
+  </div>
+</aside>
+<button id="burger" type="button" aria-label="Open menu" class="md:hidden fixed top-3 left-3 z-20 p-2 rounded-lg border border-neutral-800 bg-neutral-900 text-white">
+  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+<main class="flex-1 min-w-0 overflow-y-auto flex">
+<div class="flex flex-col items-center w-full max-w-4xl m-auto p-4 pt-16 space-y-8">
+  <div class="flex flex-col items-center gap-4">
+    <img src="dunkles-logo-white.png" alt="dunkles" class="w-16 h-16 object-contain">
+    <h1 class="text-4xl font-bold text-white">dunkles</h1>
+  </div>
+
+  <div id="log" class="w-full space-y-3 text-sm"></div>
+  <div class="w-full">
+    <div class="relative bg-neutral-900 rounded-xl border border-neutral-800">
+      <textarea id="box" placeholder="Ask dunkles anything..."
+        class="w-full px-4 py-3 resize-none bg-transparent border-none text-white text-sm outline-none placeholder:text-neutral-500 placeholder:text-sm"
+        style="min-height:60px;height:60px;overflow:hidden"></textarea>
+      <input id="file" type="file" multiple class="hidden">
+      <div id="chips" class="flex flex-wrap gap-2 px-4 pb-1 text-xs text-zinc-400 empty:hidden"></div>
+      <div class="flex items-center justify-between p-3">
+        <button id="attach" type="button" class="group p-2 hover:bg-neutral-800 rounded-lg transition-colors flex items-center gap-1">
+          <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          <span class="text-xs text-zinc-400 hidden group-hover:inline">Attach</span>
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="project" type="button" class="px-2 py-1 rounded-lg text-sm text-zinc-400 transition-colors border border-dashed border-zinc-700 hover:border-zinc-600 hover:bg-zinc-800 flex items-center gap-1">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>Project
+          </button>
+          <button id="send" type="button" class="px-1.5 py-1.5 rounded-lg text-sm transition-colors border border-zinc-700 hover:border-zinc-600 text-zinc-400 flex items-center">
+            <svg id="arrow" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7M12 19V5"/></svg>
+            <span class="sr-only">Send</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-center gap-3 mt-4">
+      <button type="button" data-act data-file data-prompt="Clone this screenshot: " class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Clone a Screenshot</span></button>
+      <button type="button" data-act data-prompt="Import this Figma design: " class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Import from Figma</span></button>
+      <button type="button" data-act data-file data-prompt="" class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Upload a Project</span></button>
+      <button type="button" data-act data-prompt="Build a landing page for " class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Landing Page</span></button>
+      <button type="button" data-act data-prompt="Create a sign up form with " class="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"><span class="text-xs">Sign Up Form</span></button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div id="pmodal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4">
+  <div class="w-full max-w-md max-h-full overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-950 text-neutral-300">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-neutral-800">
+      <h2 class="text-lg font-semibold text-white">Profile</h2>
+      <button id="pclose" type="button" aria-label="Close" class="text-2xl leading-none text-neutral-500 hover:text-white">×</button>
+    </div>
+    <div class="p-5 space-y-6 text-sm">
+      <div class="flex items-center gap-4">
+        <span id="pbig" class="w-16 h-16 rounded-full bg-white text-black grid place-items-center text-2xl font-semibold">?</span>
+        <div class="min-w-0">
+          <div id="pbigname" class="text-white font-medium truncate"></div>
+          <div id="pbigmail" class="text-xs text-neutral-500 truncate"></div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label for="pnameinput" class="text-xs uppercase tracking-widest text-neutral-500">Display name</label>
+        <div class="flex gap-2">
+          <input id="pnameinput" type="text" maxlength="40" class="h-9 flex-1 min-w-0 rounded-lg border border-neutral-800 bg-neutral-900 px-3 text-white outline-none focus:border-neutral-600">
+          <button id="psavename" type="button" class="h-9 px-4 rounded-lg bg-white text-black font-medium hover:bg-neutral-200">Save</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="rounded-lg border border-neutral-800 p-3"><div class="text-neutral-500">Signed in with</div><div id="pprov" class="mt-1 text-white"></div></div>
+        <div class="rounded-lg border border-neutral-800 p-3"><div class="text-neutral-500">Member since</div><div id="psince" class="mt-1 text-white"></div></div>
+      </div>
+
+      <div class="space-y-2">
+        <label for="ppass" class="text-xs uppercase tracking-widest text-neutral-500">Change password</label>
+        <div class="flex gap-2">
+          <input id="ppass" type="password" placeholder="New password (min. 8)" class="h-9 flex-1 min-w-0 rounded-lg border border-neutral-800 bg-neutral-900 px-3 text-white placeholder:text-neutral-600 outline-none focus:border-neutral-600">
+          <button id="psavepass" type="button" class="h-9 px-4 rounded-lg border border-neutral-700 text-white hover:bg-neutral-800">Update</button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between rounded-lg border border-neutral-800 p-3">
+        <div><div class="text-white">Chat history</div><div id="pcount" class="text-xs text-neutral-500"></div></div>
+        <button id="pclear" type="button" class="px-3 py-1.5 rounded-lg border border-neutral-700 text-xs text-neutral-300 hover:bg-neutral-800 hover:text-white">Clear all</button>
+      </div>
+
+      <p id="pmsg" class="text-xs min-h-4"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const box = document.getElementById('box');
+const send = document.getElementById('send');
+function resize(reset) {
+  box.style.height = '60px';
+  if (!reset) box.style.height = Math.max(60, Math.min(box.scrollHeight, 200)) + 'px';
+}
+function paint() {
+  const on = box.value.trim().length > 0;
+  send.className = 'px-1.5 py-1.5 rounded-lg text-sm transition-colors border border-zinc-700 hover:border-zinc-600 flex items-center ' + (on ? 'bg-white text-black' : 'text-zinc-400');
+}
+const log = document.getElementById('log');
+const chips = document.getElementById('chips');
+const fileIn = document.getElementById('file');
+let files = [], projectName = '';
+
+function bubble(text, mine) {
+  const d = document.createElement('div');
+  d.className = 'flex ' + (mine ? 'justify-end' : 'justify-start');
+  const p = document.createElement('div');
+  p.className = 'max-w-[85%] rounded-xl px-4 py-2 whitespace-pre-wrap ' + (mine ? 'bg-white text-black' : 'bg-neutral-900 border border-neutral-800 text-neutral-300');
+  p.textContent = text;
+  d.appendChild(p); log.appendChild(d);
+  d.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  return d;
+}
+function renderChips() {
+  chips.innerHTML = '';
+  const add = (t, onx) => {
+    const c = document.createElement('span');
+    c.className = 'inline-flex items-center gap-1 rounded-full border border-neutral-800 bg-neutral-800/50 px-2 py-1';
+    c.textContent = t;
+    const x = document.createElement('button');
+    x.type = 'button'; x.textContent = '×'; x.className = 'hover:text-white';
+    x.onclick = onx; c.appendChild(x); chips.appendChild(c);
+  };
+  if (projectName) add('Project: ' + projectName, () => { projectName = ''; renderChips(); });
+  files.forEach((f, i) => add(f.name, () => { files.splice(i, 1); renderChips(); }));
+}
+function submit() {
+  const text = box.value.trim();
+  if (!text) return;
+  let shown = text;
+  if (projectName) shown = '[' + projectName + '] ' + shown;
+  if (files.length) shown += '\n📎 ' + files.map(f => f.name).join(', ');
+  const cid = ensureChat(text);
+  addMsg(cid, shown, true);
+  // TODO: send the message to the AI API
+  askAI(cid);
+  box.value = ''; files = []; renderChips(); resize(true); paint();
+}
+
+document.getElementById('attach').addEventListener('click', () => fileIn.click());
+fileIn.addEventListener('change', () => { files = files.concat([...fileIn.files]); fileIn.value = ''; renderChips(); });
+document.getElementById('project').addEventListener('click', () => {
+  const n = prompt('Project name:', projectName);
+  if (n !== null) { projectName = n.trim(); renderChips(); }
+});
+document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => {
+  if (b.dataset.prompt) { box.value = b.dataset.prompt; resize(); paint(); box.focus(); }
+  if ('file' in b.dataset) fileIn.click();
+}));
+
+box.addEventListener('input', () => { resize(); paint(); });
+box.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+});
+send.addEventListener('click', submit);
+const A = window.dunklesAuth;
+
+// Opened from a "reset password" email
+if (A.client) A.client.auth.onAuthStateChange(async ev => {
+  if (ev !== 'PASSWORD_RECOVERY') return;
+  const p = prompt('Enter your new password (min. 8 characters):');
+  if (!p) return;
+  if (p.length < 8) { alert('Password must be at least 8 characters.'); return; }
+  const { error } = await A.client.auth.updateUser({ password: p });
+  alert(error ? error.message : 'Password updated.');
+});
+
+// Only signed-in users may see this page.
+(async () => {
+  const session = await A.session();
+  if (!session) { location.replace('login.html'); return; }
+  document.documentElement.style.visibility = 'visible';
+  initUser(session.user);
+})();
+
+document.getElementById('logout').addEventListener('click', async () => {
+  if (A.client) await A.client.auth.signOut();
+  location.href = 'login.html';
+});
+
+// ===== Sidebar: chats + profile =====
+let uid = 'guest', chats = [], current = null, me = null;
+const storeKey = () => 'dunkles_chats_' + uid;
+function loadChats() { try { chats = JSON.parse(localStorage.getItem(storeKey()) || '[]'); } catch (e) { chats = []; } }
+function saveChats() { try { localStorage.setItem(storeKey(), JSON.stringify(chats)); } catch (e) {} }
+
+function initUser(u) {
+  me = u; uid = u.id; loadChats();
+  const m = u.user_metadata || {};
+  const name = m.full_name || m.name || m.user_name || (u.email || 'Account').split('@')[0];
+  document.getElementById('pname').textContent = name;
+  document.getElementById('pmail').textContent = u.email || '';
+  document.getElementById('menumail').textContent = u.email || '';
+  document.getElementById('avatar').textContent = name.trim().charAt(0).toUpperCase() || '?';
+  renderList();
+}
+
+function ensureChat(text) {
+  if (!current) {
+    const c = { id: Date.now().toString(36), title: text.slice(0, 40), messages: [], updated: Date.now() };
+    chats.push(c); current = c.id;
+  }
+  return current;
+}
+function addMsg(id, text, mine) {
+  const c = chats.find(x => x.id === id);
+  if (!c) return;
+  c.messages.push({ text, mine }); c.updated = Date.now(); saveChats(); renderList();
+  if (current === id) bubble(text, mine);
+}
+function renderList() {
+  const nav = document.getElementById('chatlist');
+  nav.innerHTML = '';
+  if (!chats.length) {
+    nav.innerHTML = '<p class="px-3 py-2 text-xs text-neutral-600">No chats yet.</p>';
+    return;
+  }
+  [...chats].sort((a, b) => b.updated - a.updated).forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'group flex items-center rounded-lg ' + (c.id === current ? 'bg-neutral-800' : 'hover:bg-neutral-900');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'flex-1 min-w-0 text-left px-3 py-2 text-sm truncate ' + (c.id === current ? 'text-white' : 'text-neutral-400 group-hover:text-white');
+    b.textContent = c.title || 'New chat';
+    b.onclick = () => openChat(c.id);
+    const x = document.createElement('button');
+    x.type = 'button'; x.setAttribute('aria-label', 'Delete chat');
+    x.className = 'px-2 text-neutral-500 hover:text-white md:opacity-0 group-hover:opacity-100';
+    x.textContent = '×';
+    x.onclick = () => {
+      chats = chats.filter(k => k.id !== c.id); saveChats();
+      if (current === c.id) newChat(); else renderList();
+    };
+    row.append(b, x); nav.appendChild(row);
+  });
+}
+function openChat(id) {
+  const c = chats.find(x => x.id === id);
+  if (!c) return;
+  current = id; log.innerHTML = '';
+  c.messages.forEach(m => bubble(m.text, m.mine));
+  renderList(); closeSide();
+}
+function newChat() {
+  current = null; log.innerHTML = ''; box.value = ''; files = []; renderChips();
+  resize(true); paint(); renderList(); closeSide(); box.focus();
+}
+
+const side = document.getElementById('side'), scrim = document.getElementById('scrim');
+function openSide() { side.classList.remove('-translate-x-full'); scrim.classList.remove('hidden'); }
+function closeSide() { side.classList.add('-translate-x-full'); scrim.classList.add('hidden'); }
+document.getElementById('burger').addEventListener('click', openSide);
+scrim.addEventListener('click', closeSide);
+document.getElementById('newchat').addEventListener('click', newChat);
+
+const menu = document.getElementById('menu');
+document.getElementById('profile').addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('hidden'); });
+document.addEventListener('click', e => { if (!menu.contains(e.target)) menu.classList.add('hidden'); });
+
+// ===== AI reply (Supabase Edge Function -> Gemini) =====
+async function askAI(cid) {
+  const c = chats.find(x => x.id === cid);
+  if (!c) return;
+  const history = c.messages.slice(-20).map(m => ({ role: m.mine ? 'user' : 'model', text: m.text }));
+  const tmp = current === cid ? bubble('…', false) : null;
+  let reply = '', failed = false;
+  try {
+    if (!A.client) throw new Error('Sign-in is not configured.');
+    const { data, error } = await A.client.functions.invoke('chat', { body: { messages: history } });
+    if (error) {
+      let msg = error.message;
+      try { const j = await error.context.json(); if (j && j.error) msg = j.error; } catch (e) {}
+      throw new Error(msg);
+    }
+    if (data && data.error) throw new Error(data.error);
+    reply = data.reply;
+  } catch (e) {
+    failed = true;
+    reply = 'Sorry, something went wrong: ' + (e.message || e);
+  }
+  if (tmp) tmp.remove();
+  if (failed) { if (current === cid) bubble(reply, false); }
+  else addMsg(cid, reply, false);
+}
+
+// ===== Profile panel =====
+const pm = document.getElementById('pmodal'), pmsg = document.getElementById('pmsg');
+const say = (t, bad) => { pmsg.textContent = t; pmsg.className = 'text-xs min-h-4 ' + (bad ? 'text-red-400' : 'text-emerald-400'); };
+function showName(name) {
+  document.getElementById('pname').textContent = name;
+  document.getElementById('pbigname').textContent = name;
+  const l = name.trim().charAt(0).toUpperCase() || '?';
+  document.getElementById('avatar').textContent = l;
+  document.getElementById('pbig').textContent = l;
+}
+function openProfile() {
+  if (!me) return;
+  const m = me.user_metadata || {};
+  const name = m.full_name || m.name || m.user_name || (me.email || 'Account').split('@')[0];
+  showName(name);
+  document.getElementById('pnameinput').value = name;
+  document.getElementById('pbigmail').textContent = me.email || '';
+  const prov = (me.app_metadata && me.app_metadata.provider) || 'email';
+  document.getElementById('pprov').textContent = prov.charAt(0).toUpperCase() + prov.slice(1);
+  document.getElementById('psince').textContent = me.created_at ? new Date(me.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+  document.getElementById('pcount').textContent = chats.length + (chats.length === 1 ? ' chat' : ' chats') + ' saved on this device';
+  document.getElementById('ppass').value = ''; say('');
+  menu.classList.add('hidden'); closeSide();
+  pm.classList.remove('hidden'); pm.classList.add('flex');
+}
+function closeProfile() { pm.classList.add('hidden'); pm.classList.remove('flex'); }
+document.getElementById('openprofile').addEventListener('click', openProfile);
+document.getElementById('pclose').addEventListener('click', closeProfile);
+pm.addEventListener('click', e => { if (e.target === pm) closeProfile(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProfile(); });
+
+document.getElementById('psavename').addEventListener('click', async () => {
+  const name = document.getElementById('pnameinput').value.trim();
+  if (!name) return say('Name cannot be empty.', true);
+  const { data, error } = await A.client.auth.updateUser({ data: { full_name: name } });
+  if (error) return say(error.message, true);
+  me = data.user; showName(name); say('Name saved.');
+});
+document.getElementById('psavepass').addEventListener('click', async () => {
+  const p = document.getElementById('ppass').value;
+  if (p.length < 8) return say('Password must be at least 8 characters.', true);
+  const { error } = await A.client.auth.updateUser({ password: p });
+  if (error) return say(error.message, true);
+  document.getElementById('ppass').value = ''; say('Password updated.');
+});
+document.getElementById('pclear').addEventListener('click', () => {
+  if (!chats.length) return say('No chats to clear.', true);
+  if (!confirm('Delete all chats on this device?')) return;
+  chats = []; saveChats(); newChat();
+  document.getElementById('pcount').textContent = '0 chats saved on this device'; say('Chat history cleared.');
+});
+</script>
+</body>
+</html>
