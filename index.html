@@ -27,6 +27,9 @@
   <div class="relative border-t border-neutral-800 p-3">
     <div id="menu" class="hidden absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-neutral-800 bg-neutral-900 p-1 shadow-lg">
       <div id="menumail" class="px-3 py-2 text-xs text-neutral-500 truncate"></div>
+      <button id="openprofile" type="button" class="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white text-left">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile
+      </button>
       <button id="logout" type="button" class="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white text-left">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Log out
       </button>
@@ -86,6 +89,53 @@
 </div>
 
 </main>
+
+<div id="pmodal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4">
+  <div class="w-full max-w-md max-h-full overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-950 text-neutral-300">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-neutral-800">
+      <h2 class="text-lg font-semibold text-white">Profile</h2>
+      <button id="pclose" type="button" aria-label="Close" class="text-2xl leading-none text-neutral-500 hover:text-white">×</button>
+    </div>
+    <div class="p-5 space-y-6 text-sm">
+      <div class="flex items-center gap-4">
+        <span id="pbig" class="w-16 h-16 rounded-full bg-white text-black grid place-items-center text-2xl font-semibold">?</span>
+        <div class="min-w-0">
+          <div id="pbigname" class="text-white font-medium truncate"></div>
+          <div id="pbigmail" class="text-xs text-neutral-500 truncate"></div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label for="pnameinput" class="text-xs uppercase tracking-widest text-neutral-500">Display name</label>
+        <div class="flex gap-2">
+          <input id="pnameinput" type="text" maxlength="40" class="h-9 flex-1 min-w-0 rounded-lg border border-neutral-800 bg-neutral-900 px-3 text-white outline-none focus:border-neutral-600">
+          <button id="psavename" type="button" class="h-9 px-4 rounded-lg bg-white text-black font-medium hover:bg-neutral-200">Save</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="rounded-lg border border-neutral-800 p-3"><div class="text-neutral-500">Signed in with</div><div id="pprov" class="mt-1 text-white"></div></div>
+        <div class="rounded-lg border border-neutral-800 p-3"><div class="text-neutral-500">Member since</div><div id="psince" class="mt-1 text-white"></div></div>
+      </div>
+
+      <div class="space-y-2">
+        <label for="ppass" class="text-xs uppercase tracking-widest text-neutral-500">Change password</label>
+        <div class="flex gap-2">
+          <input id="ppass" type="password" placeholder="New password (min. 8)" class="h-9 flex-1 min-w-0 rounded-lg border border-neutral-800 bg-neutral-900 px-3 text-white placeholder:text-neutral-600 outline-none focus:border-neutral-600">
+          <button id="psavepass" type="button" class="h-9 px-4 rounded-lg border border-neutral-700 text-white hover:bg-neutral-800">Update</button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between rounded-lg border border-neutral-800 p-3">
+        <div><div class="text-white">Chat history</div><div id="pcount" class="text-xs text-neutral-500"></div></div>
+        <button id="pclear" type="button" class="px-3 py-1.5 rounded-lg border border-neutral-700 text-xs text-neutral-300 hover:bg-neutral-800 hover:text-white">Clear all</button>
+      </div>
+
+      <p id="pmsg" class="text-xs min-h-4"></p>
+    </div>
+  </div>
+</div>
+
 <script>
 const box = document.getElementById('box');
 const send = document.getElementById('send');
@@ -180,13 +230,13 @@ document.getElementById('logout').addEventListener('click', async () => {
 });
 
 // ===== Sidebar: chats + profile =====
-let uid = 'guest', chats = [], current = null;
+let uid = 'guest', chats = [], current = null, me = null;
 const storeKey = () => 'dunkles_chats_' + uid;
 function loadChats() { try { chats = JSON.parse(localStorage.getItem(storeKey()) || '[]'); } catch (e) { chats = []; } }
 function saveChats() { try { localStorage.setItem(storeKey(), JSON.stringify(chats)); } catch (e) {} }
 
 function initUser(u) {
-  uid = u.id; loadChats();
+  me = u; uid = u.id; loadChats();
   const m = u.user_metadata || {};
   const name = m.full_name || m.name || m.user_name || (u.email || 'Account').split('@')[0];
   document.getElementById('pname').textContent = name;
@@ -283,6 +333,21 @@ async function askAI(cid) {
   if (failed) { if (current === cid) bubble(reply, false); }
   else addMsg(cid, reply, false);
 }
-</script>
-</body>
-</html>
+
+// ===== Profile panel =====
+const pm = document.getElementById('pmodal'), pmsg = document.getElementById('pmsg');
+const say = (t, bad) => { pmsg.textContent = t; pmsg.className = 'text-xs min-h-4 ' + (bad ? 'text-red-400' : 'text-emerald-400'); };
+function showName(name) {
+  document.getElementById('pname').textContent = name;
+  document.getElementById('pbigname').textContent = name;
+  const l = name.trim().charAt(0).toUpperCase() || '?';
+  document.getElementById('avatar').textContent = l;
+  document.getElementById('pbig').textContent = l;
+}
+function openProfile() {
+  if (!me) return;
+  const m = me.user_metadata || {};
+  const name = m.full_name || m.name || m.user_name || (me.email || 'Account').split('@')[0];
+  showName(name);
+  document.getElementById('pnameinput').value = name;
+  document.getE
