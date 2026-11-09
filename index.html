@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>dunkles</title>
 <link rel="icon" href="dunkles-logo-white.png">
-<style>html{visibility:hidden}</style>
+<style>html{visibility:hidden}body{height:100vh;height:100dvh}</style>
 <script>
 // Safety net: never leave the page black, and show any error on screen.
 (function () {
@@ -345,61 +345,3 @@ async function askAI(cid) {
     reply = 'Sorry, something went wrong: ' + (e.message || e);
   }
   if (tmp) tmp.remove();
-  if (failed) { if (current === cid) bubble(reply, false); }
-  else addMsg(cid, reply, false);
-}
-
-// ===== Profile panel =====
-const pm = document.getElementById('pmodal'), pmsg = document.getElementById('pmsg');
-const say = (t, bad) => { pmsg.textContent = t; pmsg.className = 'text-xs min-h-4 ' + (bad ? 'text-red-400' : 'text-emerald-400'); };
-function showName(name) {
-  document.getElementById('pname').textContent = name;
-  document.getElementById('pbigname').textContent = name;
-  const l = name.trim().charAt(0).toUpperCase() || '?';
-  document.getElementById('avatar').textContent = l;
-  document.getElementById('pbig').textContent = l;
-}
-function openProfile() {
-  if (!me) return;
-  const m = me.user_metadata || {};
-  const name = m.full_name || m.name || m.user_name || (me.email || 'Account').split('@')[0];
-  showName(name);
-  document.getElementById('pnameinput').value = name;
-  document.getElementById('pbigmail').textContent = me.email || '';
-  const prov = (me.app_metadata && me.app_metadata.provider) || 'email';
-  document.getElementById('pprov').textContent = prov.charAt(0).toUpperCase() + prov.slice(1);
-  document.getElementById('psince').textContent = me.created_at ? new Date(me.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
-  document.getElementById('pcount').textContent = chats.length + (chats.length === 1 ? ' chat' : ' chats') + ' saved on this device';
-  document.getElementById('ppass').value = ''; say('');
-  menu.classList.add('hidden'); closeSide();
-  pm.classList.remove('hidden'); pm.classList.add('flex');
-}
-function closeProfile() { pm.classList.add('hidden'); pm.classList.remove('flex'); }
-document.getElementById('openprofile').addEventListener('click', openProfile);
-document.getElementById('pclose').addEventListener('click', closeProfile);
-pm.addEventListener('click', e => { if (e.target === pm) closeProfile(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProfile(); });
-
-document.getElementById('psavename').addEventListener('click', async () => {
-  const name = document.getElementById('pnameinput').value.trim();
-  if (!name) return say('Name cannot be empty.', true);
-  const { data, error } = await A.client.auth.updateUser({ data: { full_name: name } });
-  if (error) return say(error.message, true);
-  me = data.user; showName(name); say('Name saved.');
-});
-document.getElementById('psavepass').addEventListener('click', async () => {
-  const p = document.getElementById('ppass').value;
-  if (p.length < 8) return say('Password must be at least 8 characters.', true);
-  const { error } = await A.client.auth.updateUser({ password: p });
-  if (error) return say(error.message, true);
-  document.getElementById('ppass').value = ''; say('Password updated.');
-});
-document.getElementById('pclear').addEventListener('click', () => {
-  if (!chats.length) return say('No chats to clear.', true);
-  if (!confirm('Delete all chats on this device?')) return;
-  chats = []; saveChats(); newChat();
-  document.getElementById('pcount').textContent = '0 chats saved on this device'; say('Chat history cleared.');
-});
-</script>
-</body>
-</html>
