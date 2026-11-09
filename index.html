@@ -6,6 +6,21 @@
 <title>dunkles</title>
 <link rel="icon" href="dunkles-logo-white.png">
 <style>html{visibility:hidden}</style>
+<script>
+// Safety net: never leave the page black, and show any error on screen.
+(function () {
+  function show(msg) {
+    document.documentElement.style.visibility = 'visible';
+    var d = document.createElement('pre');
+    d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#400;color:#fff;font:12px monospace;padding:8px;margin:0;white-space:pre-wrap';
+    d.textContent = msg;
+    (document.body || document.documentElement).appendChild(d);
+  }
+  window.addEventListener('error', function (e) { show('Error: ' + e.message + ' (' + String(e.filename || '').split('/').pop() + ':' + e.lineno + ')'); });
+  window.addEventListener('unhandledrejection', function (e) { show('Error: ' + ((e.reason && e.reason.message) || e.reason)); });
+  setTimeout(function () { document.documentElement.style.visibility = 'visible'; }, 4000);
+})();
+</script>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="auth.js"></script>
@@ -330,24 +345,4 @@ async function askAI(cid) {
     reply = 'Sorry, something went wrong: ' + (e.message || e);
   }
   if (tmp) tmp.remove();
-  if (failed) { if (current === cid) bubble(reply, false); }
-  else addMsg(cid, reply, false);
-}
-
-// ===== Profile panel =====
-const pm = document.getElementById('pmodal'), pmsg = document.getElementById('pmsg');
-const say = (t, bad) => { pmsg.textContent = t; pmsg.className = 'text-xs min-h-4 ' + (bad ? 'text-red-400' : 'text-emerald-400'); };
-function showName(name) {
-  document.getElementById('pname').textContent = name;
-  document.getElementById('pbigname').textContent = name;
-  const l = name.trim().charAt(0).toUpperCase() || '?';
-  document.getElementById('avatar').textContent = l;
-  document.getElementById('pbig').textContent = l;
-}
-function openProfile() {
-  if (!me) return;
-  const m = me.user_metadata || {};
-  const name = m.full_name || m.name || m.user_name || (me.email || 'Account').split('@')[0];
-  showName(name);
-  document.getElementById('pnameinput').value = name;
-  document.getE
+  if (failed) { if (current ===
